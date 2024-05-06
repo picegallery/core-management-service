@@ -1,4 +1,4 @@
-import { HttpException, Injectable } from '@nestjs/common';
+import { HttpException, Injectable, Inject } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import {
   CognitoUser,
@@ -7,27 +7,47 @@ import {
 } from 'amazon-cognito-identity-js';
 import { CognitoIdentityServiceProvider } from 'aws-sdk';
 import { AuthType, UserType } from 'src/users/entities/user.entity';
+import * as crypto from 'crypto';
 
 @Injectable()
 export class CognitoService {
   private readonly userPool: CognitoUserPool;
-  private clientID: string;
-  private userPoolId: string;
+  private readonly clientSecret: string;
+  private readonly userPoolId: string;
+  private readonly clientId: string;
   constructor(
     private configService: ConfigService,
+    @Inject('COGNITO_PROVIDER')
     private readonly cognitoProvider: CognitoIdentityServiceProvider,
   ) {
-    this.clientID = this.configService.get<string>('AWS_CLIENT_ID');
+    this.clientId = this.configService.get<string>('AWS_CLIENT_ID');
     this.userPoolId = this.configService.get<string>('AWS_USER_POOL_ID');
-    console.log('this.clientID', this.clientID);
-    console.log('this.userPoolId', this.userPoolId);
+    this.clientSecret = this.configService.get<string>('AWS_CLIENT_SECRET');
+    if (!this.userPoolId || !this.clientId) {
+      throw new Error('Both UserPoolId and ClientId are required.');
+    }
     this.userPool = new CognitoUserPool({
       UserPoolId: this.userPoolId,
-      ClientId: this.clientID,
+      ClientId: this.clientId,
     });
-    this.cognitoProvider = new CognitoIdentityServiceProvider({
-      region: this.configService.get<string>('AWS_REGION'),
-    });
+  }
+
+  private generateUserAttributes(
+    email: string,
+    userType: UserType,
+    authType: AuthType,
+  ): CognitoUserAttribute[] {
+    return [
+      new CognitoUserAttribute({
+        Name: 'custom:userType',
+        Value: userType,
+      }),
+      new CognitoUserAttribute({ Name: 'email', Value: email }),
+      new CognitoUserAttribute({
+        Name: 'custom:authType',
+        Value: authType,
+      }),
+    ];
   }
 
   async createCognitoUser(
@@ -41,18 +61,7 @@ export class CognitoService {
         return this.userPool.signUp(
           email,
           password,
-          [
-            new CognitoUserAttribute({
-              Name: 'custom:role',
-              Value: userType,
-            }),
-            new CognitoUserAttribute({ Name: 'email', Value: email }),
-            new CognitoUserAttribute({
-              Name: 'custom:login',
-              Value: authType,
-            }),
-          ],
-
+          this.generateUserAttributes(email, userType, authType),
           null,
           (err, result) => {
             if (!result) {
@@ -64,6 +73,7 @@ export class CognitoService {
         );
       });
     } catch (error) {
+      console.log('error', error);
       throw new HttpException(error.message, error?.status ?? 400);
     }
   }

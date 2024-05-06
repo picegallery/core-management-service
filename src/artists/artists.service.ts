@@ -1,26 +1,46 @@
-import { Injectable } from '@nestjs/common';
+import { HttpException, Inject, Injectable } from '@nestjs/common';
 import { CreateArtistDto } from './dto/create-artist.dto';
 import { UpdateArtistDto } from './dto/update-artist.dto';
+import { Repository } from 'typeorm';
+import { Artist } from './entities/artist.entity';
+import { ARTIST_REPOSITORY } from 'constants/repository';
 
 @Injectable()
 export class ArtistsService {
-  create(createArtistDto: CreateArtistDto) {
-    return 'This action adds a new artist';
+  constructor(
+    @Inject(ARTIST_REPOSITORY)
+    private artistRepository: Repository<Artist>,
+  ) {}
+
+  async create(createArtistDto: CreateArtistDto) {
+    try {
+      const artist = this.artistRepository.create({
+        ...createArtistDto,
+      });
+
+      await this.artistRepository.save(artist);
+
+      return artist;
+    } catch (error) {
+      throw new HttpException(error.message, error?.status ?? 400);
+    }
   }
 
   findAll() {
-    return `This action returns all artists`;
+    return this.artistRepository.find({
+      order: { createdDate: 'ASC', deletedDate: 'ASC' },
+    });
   }
 
-  findOne(id: number) {
-    return `This action returns a #${id} artist`;
+  findOne(id: string) {
+    return this.artistRepository.findOneBy({ id });
   }
 
-  update(id: number, updateArtistDto: UpdateArtistDto) {
-    return `This action updates a #${id} artist`;
+  update(id: string, updateArtistDto: UpdateArtistDto) {
+    return this.artistRepository.update(id, updateArtistDto);
   }
 
-  remove(id: number) {
-    return `This action removes a #${id} artist`;
+  remove(id: string) {
+    return this.artistRepository.softDelete(id);
   }
 }

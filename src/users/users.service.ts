@@ -1,10 +1,12 @@
 import { HttpException, Inject, Injectable } from '@nestjs/common';
+import * as bcrypt from 'bcrypt';
 import { Repository } from 'typeorm';
 import { CreateUserDto } from './dto/create-user.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
 import { USER_REPOSITORY } from 'constants/repository';
 import { AuthType, User } from './entities/user.entity';
 import { CognitoService } from 'src/auth/cognito/cognito.service';
+import { EmailIsTakenException } from 'src/exceptions/emailIsTaken.exception';
 
 @Injectable()
 export class UsersService {
@@ -16,21 +18,27 @@ export class UsersService {
 
   async create(createUserDto: CreateUserDto) {
     try {
-      const cognitoUser = await this.cognitoService.createCognitoUser(
+      const checkEmailExists = await this.findOneByEmail(createUserDto.email);
+      if (checkEmailExists) {
+        throw new EmailIsTakenException(createUserDto.email);
+      }
+
+      await this.cognitoService.createCognitoUser(
         createUserDto.email,
         createUserDto.password,
         createUserDto.userType,
         createUserDto.authType,
       );
-
+      const hashPass = await bcrypt.hash(createUserDto.password, 10);
       const user = this.userRepository.create({
         ...createUserDto,
         authType: AuthType.DEFAULT,
+        password: hashPass,
       });
 
       await this.userRepository.save(user);
 
-      return cognitoUser;
+      return user;
     } catch (error) {
       throw new HttpException(error.message, error?.status ?? 400);
     }

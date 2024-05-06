@@ -1,9 +1,22 @@
 import { Module } from '@nestjs/common';
 import { CognitoService } from './cognito.service';
-import { ConfigModule } from '@nestjs/config';
+import { ConfigModule, ConfigService } from '@nestjs/config';
+import { CognitoIdentityServiceProvider } from 'aws-sdk';
 
 @Module({
   imports: [ConfigModule],
-  providers: [CognitoService],
+  providers: [
+    CognitoService,
+    {
+      provide: 'COGNITO_PROVIDER',
+      useFactory: (configService: ConfigService) => {
+        return new CognitoIdentityServiceProvider({
+          region: configService.get<string>('AWS_REGION'),
+        });
+      },
+      inject: [ConfigService],
+    },
+  ],
+  exports: [CognitoService],
 })
 export class CognitoModule {}

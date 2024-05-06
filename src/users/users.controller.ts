@@ -24,16 +24,12 @@ export class UsersController {
     summary: 'Create a new user',
     description: 'Create a new user to be able to access the platform',
   })
-  @ApiBody({ type: CreateUserDto })
+  @ApiBody({
+    type: CreateUserDto,
+    description: 'User creation payload',
+  })
   create(@Body() createUserDto: CreateUserDto) {
     try {
-      const checkEmailExists = this.usersService.findOneByEmail(
-        createUserDto.email,
-      );
-      if (checkEmailExists) {
-        throw new EmailIsTakenException(createUserDto.email);
-      }
-
       return this.usersService.create(createUserDto);
     } catch (error) {
       throw new InternalErrorException(error);

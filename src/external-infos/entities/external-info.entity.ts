@@ -7,13 +7,13 @@ import {
   DeleteDateColumn,
 } from 'typeorm';
 
-enum SourceType {
+export enum SourceType {
   COLLECTION = 'collection',
   PRODUCT = 'product',
   OTHER = 'other',
 }
 
-enum OriginType {
+export enum OriginType {
   SHOPIFY = 'shopify',
   OTHER = 'other',
 }

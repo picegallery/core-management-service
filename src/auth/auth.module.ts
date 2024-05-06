@@ -6,6 +6,7 @@ import { JwtStrategy } from './guards/jwt.strategy';
 import { CongnitoAuthGuard } from './guards/cognito.guard';
 import { DatabaseModule } from 'src/database/database.module';
 import { CognitoModule } from './cognito/cognito.module';
+import { ConfigModule } from '@nestjs/config';
 
 @Module({
   imports: [
@@ -14,6 +15,7 @@ import { CognitoModule } from './cognito/cognito.module';
       defaultStrategy: 'jwt',
     }),
     CognitoModule,
+    ConfigModule,
   ],
   controllers: [AuthController],
   providers: [AuthService, JwtStrategy, CongnitoAuthGuard],
