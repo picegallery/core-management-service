@@ -21,10 +21,19 @@ export enum UserType {
   ACCOUNTANT = 'accountant',
 }
 
+export enum Gender {
+  MALE = 'male',
+  FEMALE = 'female',
+  OTHER = 'other',
+}
+
 @Entity('users')
 export class User {
   @PrimaryGeneratedColumn('uuid')
   id: string;
+
+  @Column({ type: 'enum', enum: Gender, default: null, nullable: true })
+  gender: Gender | null;
 
   @Column({ type: 'enum', enum: UserType, default: UserType.CUSTOMER })
   userType: UserType;

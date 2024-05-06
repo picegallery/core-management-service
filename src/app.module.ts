@@ -12,9 +12,13 @@ import { ArtistsModule } from './artists/artists.module';
 import { UserModulesModule } from './user-modules/user-modules.module';
 import { ModulesModule } from './modules/modules.module';
 import { UserPreferencesModule } from './user-preferences/user-preferences.module';
+import { AuthModule } from './auth/auth.module';
+import { ConfigModule } from '@nestjs/config';
+import configuration from './config/configuration';
 
 @Module({
   imports: [
+    ConfigModule.forRoot({ load: [configuration] }),
     UsersModule,
     UserPreferencesModule,
     ModulesModule,
@@ -26,6 +30,7 @@ import { UserPreferencesModule } from './user-preferences/user-preferences.modul
     ExhibitionArtworksModule,
     ExhibitionsModule,
     ExternalInfosModule,
+    AuthModule,
   ],
   controllers: [AppController],
   providers: [AppService],
