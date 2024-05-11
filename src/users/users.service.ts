@@ -3,15 +3,16 @@ import * as bcrypt from 'bcrypt';
 import { Repository } from 'typeorm';
 import { CreateUserDto } from './dto/create-user.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
-import { USER_REPOSITORY } from 'constants/repository';
+import { RepositoryEnum } from 'constants/repository';
 import { AuthType, User } from './entities/user.entity';
 import { CognitoService } from 'src/auth/cognito/cognito.service';
 import { EmailIsTakenException } from 'src/exceptions/emailIsTaken.exception';
+import { classToPlain, plainToClass } from 'class-transformer';
 
 @Injectable()
 export class UsersService {
   constructor(
-    @Inject(USER_REPOSITORY)
+    @Inject(RepositoryEnum.USER_REPOSITORY)
     private userRepository: Repository<User>,
     private readonly cognitoService: CognitoService,
   ) {}
@@ -38,7 +39,7 @@ export class UsersService {
 
       await this.userRepository.save(user);
 
-      return user;
+      return plainToClass(User, user, { excludeExtraneousValues: false });
     } catch (error) {
       throw new HttpException(error.message, error?.status ?? 400);
     }

@@ -3,25 +3,34 @@ import { CreateArtistDto } from './dto/create-artist.dto';
 import { UpdateArtistDto } from './dto/update-artist.dto';
 import { Repository } from 'typeorm';
 import { Artist } from './entities/artist.entity';
-import { ARTIST_REPOSITORY } from 'constants/repository';
+import { RepositoryEnum } from 'constants/repository';
+import { UsersService } from 'src/users/users.service';
 
 @Injectable()
 export class ArtistsService {
   constructor(
-    @Inject(ARTIST_REPOSITORY)
+    @Inject(RepositoryEnum.ARTIST_REPOSITORY)
     private artistRepository: Repository<Artist>,
+    private readonly usersService: UsersService,
   ) {}
 
   async create(createArtistDto: CreateArtistDto) {
     try {
+      const user = await this.usersService.create(createArtistDto.user);
+      const nationalities = createArtistDto.nationalities.map((nationality) =>
+        JSON.stringify(nationality),
+      );
       const artist = this.artistRepository.create({
         ...createArtistDto,
+        user: user,
+        nationalities,
       });
 
       await this.artistRepository.save(artist);
 
       return artist;
     } catch (error) {
+      console.log('error', error);
       throw new HttpException(error.message, error?.status ?? 400);
     }
   }
@@ -36,8 +45,13 @@ export class ArtistsService {
     return this.artistRepository.findOneBy({ id });
   }
 
-  update(id: string, updateArtistDto: UpdateArtistDto) {
-    return this.artistRepository.update(id, updateArtistDto);
+  async update(id: string, updateArtistDto: UpdateArtistDto) {
+    const nationalities = updateArtistDto.nationalities.map((nationality) =>
+      JSON.stringify(nationality),
+    );
+    const updatedArtistDto = { ...updateArtistDto, nationalities };
+    await this.artistRepository.update(id, updatedArtistDto);
+    return this.findOne(id);
   }
 
   remove(id: string) {

@@ -51,6 +51,6 @@ export class CreateUserDto {
 
   @IsString()
   @IsOptional()
-  @ApiProperty({ example: 'password123' })
+  @ApiProperty({ example: 'Password123@' })
   password: string;
 }

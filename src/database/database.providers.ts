@@ -1,9 +1,9 @@
-import { DATA_SOURCE } from 'constants/repository';
+import { RepositoryEnum } from 'constants/repository';
 import { DataSource } from 'typeorm';
 
 export const databaseProviders = [
   {
-    provide: DATA_SOURCE,
+    provide: RepositoryEnum.DATA_SOURCE,
     useFactory: async () => {
       const dataSource = new DataSource({
         type: 'postgres',

@@ -42,6 +42,9 @@ export class Artist {
   @Column({ nullable: true })
   birthDate: Date;
 
+  @Column('json', { nullable: true })
+  nationalities: string[];
+
   @DeleteDateColumn()
   deletedDate: Date;
 
