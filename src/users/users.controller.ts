@@ -11,8 +11,8 @@ import { ApiBody, ApiOperation, ApiTags } from '@nestjs/swagger';
 import { UsersService } from './users.service';
 import { CreateUserDto } from './dto/create-user.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
-import { EmailIsTakenException } from 'src/exceptions/emailIsTaken.exception';
-import { InternalErrorException } from 'src/exceptions/internalError.exception';
+import { EmailIsTakenException } from 'src/shared/exceptions/emailIsTaken.exception';
+import { InternalErrorException } from 'src/shared/exceptions/internalError.exception';
 
 @ApiTags('Users')
 @Controller('users')

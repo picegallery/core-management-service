@@ -12,12 +12,24 @@ import { UserModulesModule } from './user-modules/user-modules.module';
 import { ModulesModule } from './modules/modules.module';
 import { UserPreferencesModule } from './user-preferences/user-preferences.module';
 import { AuthModule } from './auth/auth.module';
-import { ConfigModule } from '@nestjs/config';
+import { ConfigModule, ConfigService } from '@nestjs/config';
 import configuration from './config/configuration';
+import { CognitoAuthModule } from '@nestjs-cognito/auth';
 
 @Module({
   imports: [
     ConfigModule.forRoot({ load: [configuration] }),
+    CognitoAuthModule.registerAsync({
+      imports: [ConfigModule],
+      useFactory: async (configService: ConfigService) => ({
+        jwtVerifier: {
+          userPoolId: configService.get('AWS_USER_POOL_ID') as string,
+          clientId: configService.get('AWS_CLIENT_ID'),
+          tokenUse: 'id',
+        },
+      }),
+      inject: [ConfigService],
+    }),
     UsersModule,
     UserPreferencesModule,
     ModulesModule,

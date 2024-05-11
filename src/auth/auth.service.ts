@@ -1,34 +1,17 @@
 import { HttpException, HttpStatus, Injectable } from '@nestjs/common';
-import {
-  AuthenticationDetails,
-  CognitoUser,
-  CognitoUserAttribute,
-  CognitoUserPool,
-  CognitoUserSession,
-} from 'amazon-cognito-identity-js';
-import SimpleCrypto from 'simple-crypto-js';
-import axios from 'axios';
-import { InjectRepository } from '@nestjs/typeorm';
-import { Repository, DataSource } from 'typeorm';
-import { GoogleUser } from './type/google-user.type';
-import { CognitoIdentityServiceProvider } from 'aws-sdk';
-import { generatePassword } from './../utils/password-generator';
-
-import { AuthenticateUserDto } from './dto/authenticate-user.dto';
-import { ForgotPasswordDto } from './dto/forgot-password.dto';
-
-import { RequestNewPasswordDto } from './dto/request-new-password.dto';
-import { User } from './type/user.type';
-
-import { User as UserEntity, UserType } from './../users/entities/user.entity';
-import { VerifyUserDto } from './dto/verify-user.dto';
-
+import { CognitoUserSession } from 'amazon-cognito-identity-js';
 import { AuthType } from './../users/entities/user.entity';
-import { CreateUserDto } from 'src/users/dto/create-user.dto';
+import { UsersService } from 'src/users/users.service';
+import { LoginWithGoogleException } from './exceptions/loginWithGoogle.exception';
+import { CognitoService } from './cognito/cognito.service';
+import { AuthenticateUserDto } from './dto/authenticate-user.dto';
 
 @Injectable()
 export class AuthService {
-  constructor() {}
+  constructor(
+    private readonly usersService: UsersService,
+    private readonly cognitoService: CognitoService,
+  ) {}
 
   //   async registerUser(dto: CreateUserDto): Promise<CognitoUser> {
   //     try {
@@ -83,113 +66,50 @@ export class AuthService {
   //     }
   //   }
 
-  //   async authenticateUser(
-  //     customer: AuthenticateUserDto,
-  //   ): Promise<CognitoUserSession> {
-  //     try {
-  //       const { email, password } = customer;
-  //       const user = await this.customerRepo.findOne({
-  //         where: { email: email },
-  //       });
-  //       if (user.authType === AuthType.GOOGLE) {
-  //         throw new HttpException(
-  //           'This email previously registered with google, Please login with google',
-  //           HttpStatus.BAD_REQUEST,
-  //         );
-  //       }
-  //       const authenticationDetails = new AuthenticationDetails({
-  //         Username: email,
-  //         Password: password,
-  //       });
-  //       const userData = {
-  //         Username: email,
-  //         Pool: this.userPool,
-  //       };
-  //       const newUser = new CognitoUser(userData);
+  async authenticateUser(
+    authenticateUser: AuthenticateUserDto,
+  ): Promise<CognitoUserSession> {
+    try {
+      const { email, password } = authenticateUser;
+      const user = await this.usersService.findOneByEmail(email);
 
-  //       return new Promise<CognitoUserSession>((resolve, reject) => {
-  //         newUser.authenticateUser(authenticationDetails, {
-  //           onSuccess: (result) => {
-  //             resolve(result);
-  //           },
-  //           onFailure: (error) => {
-  //             reject(new HttpException(error.message, HttpStatus.UNAUTHORIZED));
-  //           },
-  //           newPasswordRequired: () => {
-  //             reject(
-  //               new HttpException(
-  //                 'Password reset is required',
-  //                 HttpStatus.UNAUTHORIZED,
-  //               ),
-  //             );
-  //           },
-  //         });
-  //       });
-  //     } catch (error) {
-  //       throw new HttpException(error.message, HttpStatus.UNAUTHORIZED);
-  //     }
-  //   }
+      if (user.authType === AuthType.GOOGLE) {
+        throw new LoginWithGoogleException();
+      }
 
-  //   async getCustomer(session: CognitoUserSession): Promise<User> {
-  //     try {
-  //       const payload = session.getIdToken().payload;
-  //       const email = payload.email;
-  //       const role = payload['custom:role'];
-  //       if (!email) {
-  //         throw new HttpException('Email is required', HttpStatus.NOT_FOUND);
-  //       }
-  //       if (!role) {
-  //         throw new HttpException('Role is required', HttpStatus.NOT_FOUND);
-  //       }
-  //       const customer: UserEntity = await this.customerRepo.findOne({
-  //         where: { email: email },
-  //       });
-  //       if (!customer) {
-  //         throw new HttpException('User not found', HttpStatus.NOT_FOUND);
-  //       }
-  //       const user: User = {
-  //         email,
-  //         role,
-  //         id: customer.id,
-  //       };
-  //       return user;
-  //     } catch (error) {
-  //       throw new HttpException(error.message, error?.status ?? 401);
-  //     }
-  //   }
+      return this.cognitoService.signInUser(email, password);
+    } catch (error) {
+      throw new HttpException(error.message, HttpStatus.UNAUTHORIZED);
+    }
+  }
 
-  //   async refreshToken(token: string): Promise<string> {
-  //     if (!token) {
-  //       throw new HttpException('Token is required', HttpStatus.BAD_REQUEST);
-  //     }
-  //     try {
-  //       const params = {
-  //         AuthFlow: 'REFRESH_TOKEN_AUTH',
-  //         ClientId: this.clientID,
-  //         AuthParameters: {
-  //           REFRESH_TOKEN: token,
-  //         },
-  //       };
-  //       const result = await this.cognitoProvider.initiateAuth(params).promise();
-  //       const accessToken = result.AuthenticationResult.AccessToken;
-  //       return accessToken;
-  //     } catch (error) {
-  //       throw new HttpException(error.message, HttpStatus.BAD_REQUEST);
-  //     }
+  // async refreshToken(token: string): Promise<string> {
+  //   if (!token) {
+  //     throw new HttpException('Token is required', HttpStatus.BAD_REQUEST);
   //   }
+  //   try {
+  //     const params = {
+  //       AuthFlow: 'REFRESH_TOKEN_AUTH',
+  //       ClientId: this.clientID,
+  //       AuthParameters: {
+  //         REFRESH_TOKEN: token,
+  //       },
+  //     };
+  //     const result = await this.cognitoProvider.initiateAuth(params).promise();
+  //     const accessToken = result.AuthenticationResult.AccessToken;
+  //     return accessToken;
+  //   } catch (error) {
+  //     throw new HttpException(error.message, HttpStatus.BAD_REQUEST);
+  //   }
+  // }
 
-  //   async logout(userName: string) {
-  //     try {
-  //       const params: CognitoIdentityServiceProvider.Types.AdminUserGlobalSignOutRequest =
-  //         {
-  //           UserPoolId: this.userPoolId,
-  //           Username: userName,
-  //         };
-  //       await this.cognitoProvider.adminUserGlobalSignOut(params).promise();
-  //     } catch (error) {
-  //       throw new HttpException(`Failed to logout: ${error.message}`, 400);
-  //     }
-  //   }
+  async logout(username: string) {
+    try {
+      this.cognitoService.signOutUser(username);
+    } catch (error) {
+      throw new HttpException(`Failed to logout: ${error.message}`, 400);
+    }
+  }
 
   //   async getUserByEmail(
   //     email: string,

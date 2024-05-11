@@ -7,6 +7,7 @@ import { CongnitoAuthGuard } from './guards/cognito.guard';
 import { DatabaseModule } from 'src/database/database.module';
 import { CognitoModule } from './cognito/cognito.module';
 import { ConfigModule } from '@nestjs/config';
+import { UsersModule } from 'src/users/users.module';
 
 @Module({
   imports: [
@@ -16,6 +17,7 @@ import { ConfigModule } from '@nestjs/config';
     }),
     CognitoModule,
     ConfigModule,
+    UsersModule,
   ],
   controllers: [AuthController],
   providers: [AuthService, JwtStrategy, CongnitoAuthGuard],
