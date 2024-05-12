@@ -1,6 +1,6 @@
 FROM node:18
 
-WORKDIR /app
+WORKDIR /usr/src/app
 
 COPY package*.json ./
 
@@ -10,4 +10,6 @@ COPY . .
 
 RUN yarn build
 
-CMD [ "yarn", "start:dev" ]
+EXPOSE 3000
+
+CMD ["node", "dist/src/main"]
