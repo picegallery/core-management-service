@@ -12,4 +12,4 @@ RUN yarn build
 
 EXPOSE 3000
 
-CMD ["node", "dist/src/main"]
+CMD ["npm", "start:prod"]
