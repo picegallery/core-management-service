@@ -29,7 +29,7 @@ export class ExhibitionsController {
 
   @Get(':id')
   findOne(@Param('id') id: string) {
-    return this.exhibitionsService.findOne(+id);
+    return this.exhibitionsService.findOne(id);
   }
 
   @Patch(':id')
@@ -37,11 +37,11 @@ export class ExhibitionsController {
     @Param('id') id: string,
     @Body() updateExhibitionDto: UpdateExhibitionDto,
   ) {
-    return this.exhibitionsService.update(+id, updateExhibitionDto);
+    return this.exhibitionsService.update(id, updateExhibitionDto);
   }
 
   @Delete(':id')
   remove(@Param('id') id: string) {
-    return this.exhibitionsService.remove(+id);
+    return this.exhibitionsService.remove(id);
   }
 }

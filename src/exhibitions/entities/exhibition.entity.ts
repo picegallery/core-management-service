@@ -12,7 +12,7 @@ import {
   DeleteDateColumn,
 } from 'typeorm';
 
-enum ExhibitionType {
+export enum ExhibitionType {
   HYBRID = 'hybrid',
   VIRTUAL = 'virtual',
   PHYSICAL = 'physical',
