@@ -5,6 +5,7 @@ import { Repository } from 'typeorm';
 import { Artist } from './entities/artist.entity';
 import { RepositoryEnum } from 'constants/repository';
 import { UsersService } from 'src/users/users.service';
+import { InternalErrorException } from 'src/shared/exceptions/internalError.exception';
 
 @Injectable()
 export class ArtistsService {
@@ -46,12 +47,16 @@ export class ArtistsService {
   }
 
   async update(id: string, updateArtistDto: UpdateArtistDto) {
-    const nationalities = updateArtistDto.nationalities.map((nationality) =>
-      JSON.stringify(nationality),
-    );
-    const updatedArtistDto = { ...updateArtistDto, nationalities };
-    await this.artistRepository.update(id, updatedArtistDto);
-    return this.findOne(id);
+    try {
+      const nationalities = updateArtistDto.nationalities.map((nationality) =>
+        JSON.stringify(nationality),
+      );
+      const updatedArtistDto = { ...updateArtistDto, nationalities };
+      await this.artistRepository.update(id, updatedArtistDto);
+      return this.findOne(id);
+    } catch (error) {
+      throw new InternalErrorException(error);
+    }
   }
 
   remove(id: string) {
