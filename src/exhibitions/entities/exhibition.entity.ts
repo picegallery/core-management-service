@@ -17,6 +17,7 @@ export enum ExhibitionType {
   VIRTUAL = 'virtual',
   PHYSICAL = 'physical',
   ARTFAIR = 'art-fair',
+  SOLO = 'solo',
   OTHER = 'other',
 }
 

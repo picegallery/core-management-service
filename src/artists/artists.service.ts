@@ -6,6 +6,7 @@ import { Artist } from './entities/artist.entity';
 import { RepositoryEnum } from 'constants/repository';
 import { UsersService } from 'src/users/users.service';
 import { InternalErrorException } from 'src/shared/exceptions/internalError.exception';
+import { UserType } from 'src/users/entities/user.entity';
 
 @Injectable()
 export class ArtistsService {
@@ -17,7 +18,10 @@ export class ArtistsService {
 
   async create(createArtistDto: CreateArtistDto) {
     try {
-      const user = await this.usersService.create(createArtistDto.user);
+      const user = await this.usersService.create({
+        ...createArtistDto.user,
+        userType: UserType.ARTIST,
+      });
       const nationalities = createArtistDto.nationalities.map((nationality) =>
         JSON.stringify(nationality),
       );
@@ -31,7 +35,6 @@ export class ArtistsService {
 
       return artist;
     } catch (error) {
-      console.log('error', error);
       throw new HttpException(error.message, error?.status ?? 400);
     }
   }
@@ -39,6 +42,7 @@ export class ArtistsService {
   findAll() {
     return this.artistRepository.find({
       order: { createdDate: 'ASC', deletedDate: 'ASC' },
+      relations: ['user'],
     });
   }
 
